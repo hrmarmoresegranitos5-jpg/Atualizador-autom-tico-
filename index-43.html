@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Atualizador">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Atualizador Automático · HR System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --bg: #0d0f14;
+  --surface: #161820;
+  --surface2: #1c1f2b;
+  --border: #252836;
+  --border2: #2e3248;
+  --blue: #3b6ef5;
+  --blue2: #2251d4;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #f0f2f8;
+  --muted: #6b7280;
+  --muted2: #9ca3af;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: 0 0 64px;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 16px 14px;
+  background: linear-gradient(180deg, #13162080 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(12px);
+}
+.topbar-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, #3b6ef5, #6d48e5);
+  border-radius: 12px; display: grid; place-items: center;
+  font-size: 20px; flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(59,110,245,.35);
+}
+.topbar-text h1 { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
+.topbar-text p  { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+.topbar-conn {
+  margin-left: auto; display: flex; align-items: center; gap: 5px;
+  font-size: 0.7rem; font-weight: 600;
+  padding: 5px 10px; border-radius: 100px;
+  border: 1.5px solid var(--border2); background: var(--surface2);
+  transition: all .3s;
+}
+.topbar-conn .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted); transition: background .3s;
+  flex-shrink: 0;
+}
+.topbar-conn.ok  { border-color: #10b98133; }
+.topbar-conn.ok  .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.topbar-conn.err { border-color: #ef444433; }
+.topbar-conn.err .dot { background: var(--red); }
+.topbar-conn.checking .dot { animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  display: none; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.status-bar.on { display: grid; }
+.sb-item {
+  background: var(--surface);
+  padding: 10px 12px; text-align: center;
+}
+.sb-val { font-size: 0.78rem; font-weight: 700; color: var(--text); word-break: break-all; }
+.sb-lbl { font-size: 0.6rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ── QUICK ACTIONS ── */
+.quick-section {
+  display: none; padding: 14px 16px 0;
+}
+.quick-section.on { display: block; }
+.section-label {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--muted); margin-bottom: 10px;
+}
+.quick-btns {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding-bottom: 2px; scrollbar-width: none;
+}
+.quick-btns::-webkit-scrollbar { display: none; }
+.qbtn {
+  flex-shrink: 0;
+  background: var(--surface2); border: 1.5px solid var(--border2);
+  border-radius: 10px; padding: 9px 14px;
+  color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .15s; white-space: nowrap;
+}
+.qbtn:active { transform: scale(.96); }
+.qbtn.primary { background: rgba(59,110,245,.12); border-color: rgba(59,110,245,.4); color: #7fa4ff; }
+.qbtn:hover { border-color: #3b6ef555; }
+
+/* ── MAIN CONTENT ── */
+.main { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── STEP ── */
+.step {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  transition: border-color .2s;
+  box-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+.step.open { border-color: var(--border2); }
+.step-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 16px; cursor: pointer; user-select: none;
+}
+.step-num {
+  display: none;
+}
+.step-num.done {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff; box-shadow: 0 2px 10px rgba(16,185,129,.3);
+}
+.step-title { font-size: 0.9rem; font-weight: 700; flex: 1; }
+.step-status { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+.step-arrow { color: var(--muted); font-size: 11px; transition: transform .2s; }
+.step.open .step-arrow { transform: rotate(180deg); }
+.step-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+.step.open .step-body { display: block; }
+
+label {
+  display: block; font-size: 0.67rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .7px;
+  margin-bottom: 6px; margin-top: 14px;
+}
+
+input, textarea, select {
+  width: 100%; background: #0d0f14;
+  border: 1.5px solid var(--border2); border-radius: 10px;
+  color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.88rem; padding: 12px 14px;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59,110,245,.12);
+}
+input::placeholder, textarea::placeholder { color: #3a3f52; }
+textarea { resize: none; min-height: 78px; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+select option { background: #161820; }
+
+.pwd-wrap { position: relative; }
+.pwd-wrap input { padding-right: 46px; }
+.eye-btn {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 17px; padding: 4px;
+}
+
+/* ── REPO LOADING ── */
+.repo-loader {
+  display: none; align-items: center; gap: 8px;
+  font-size: 0.72rem; color: var(--muted); margin-top: 8px;
+}
+.repo-loader.on { display: flex; }
+
+/* ── CONNECTION TEST ── */
+.conn-test-wrap { margin-top: 14px; display: flex; gap: 8px; }
+.btn-test {
+  flex: 1; padding: 12px;
+  background: var(--surface2); border: 1.5px solid var(--border2);
+  border-radius: 10px; color: var(--muted2);
+  font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-test:hover { border-color: #3b6ef555; color: #7fa4ff; }
+.btn-test.testing { color: #60a5fa; border-color: #3b6ef555; }
+
+.conn-result {
+  display: none; margin-top: 10px;
+  border-radius: 10px; padding: 11px 14px;
+  font-size: 0.78rem; font-weight: 600;
+  border: 1.5px solid; line-height: 1.6;
+}
+.conn-result.on { display: block; }
+.conn-result.ok  { background: rgba(16,185,129,.07); border-color: #10b98133; color: #34d399; }
+.conn-result.err { background: rgba(239,68,68,.07);  border-color: #ef444433;  color: #f87171; }
+.conn-result.warn{ background: rgba(245,158,11,.07); border-color: #f59e0b33;  color: #fbbf24; }
+
+.btn-save {
+  margin-top: 14px; width: 100%; padding: 13px;
+  background: linear-gradient(135deg, #3b6ef5, #2251d4);
+  border: none; border-radius: 10px;
+  color: #fff; font-family: 'Inter', sans-serif;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 4px 14px rgba(59,110,245,.25);
+}
+.btn-save:active { transform: scale(.98); }
+.btn-save.saved  { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,.25); }
+
+/* ── DROPZONE ── */
+.dropzone {
+  border: 2px dashed var(--border2); border-radius: 14px;
+  padding: 28px 16px; text-align: center;
+  cursor: pointer; position: relative; margin-top: 14px;
+  transition: border-color .2s, background .2s;
+}
+.dropzone.drag { border-color: var(--blue); background: rgba(59,110,245,.06); }
+.dropzone input[type=file] {
+  position: absolute; inset: 0; opacity: 0;
+  cursor: pointer; width: 100%; height: 100%;
+  border: none; padding: 0;
+}
+.dz-icon { font-size: 30px; margin-bottom: 8px; }
+.dz-title { font-size: 0.9rem; font-weight: 700; }
+.dz-sub { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+.file-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+.fitem {
+  background: #0d0f14; border: 1.5px solid var(--border2);
+  border-radius: 12px; padding: 12px;
+  display: grid; grid-template-columns: 28px 1fr auto;
+  gap: 10px; align-items: start;
+  transition: border-color .3s;
+}
+.fitem-icon { font-size: 20px; padding-top: 2px; }
+.fitem-name { font-size: 0.82rem; font-weight: 700; word-break: break-all; }
+.fitem-size { font-size: 0.67rem; color: var(--muted); margin-top: 2px; }
+.fitem-path {
+  width: 100%; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 7px;
+  color: var(--muted2); font-family: 'Inter', sans-serif;
+  font-size: 0.7rem; padding: 5px 8px; margin-top: 6px; outline: none;
+  transition: border-color .2s;
+}
+.fitem-path:focus { border-color: var(--blue); color: var(--text); }
+.fitem-remove {
+  background: none; border: none; color: #3a3f52;
+  cursor: pointer; font-size: 16px; padding: 2px; line-height: 1;
+  transition: color .2s;
+}
+.fitem-remove:hover { color: var(--red); }
+.fitem-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; display: none; }
+.fitem-fill { height: 100%; border-radius: 2px; width: 0; transition: width .4s ease; background: var(--blue); }
+.fitem.uploading .fitem-bar  { display: block; }
+.fitem.uploading .fitem-fill { width: 80%; }
+.fitem.done { border-color: #10b98133; }
+.fitem.done .fitem-fill { background: var(--green); width: 100%; display: block; }
+.fitem.error { border-color: #ef444433; }
+.fitem.error .fitem-fill { background: var(--red); width: 100%; display: block; }
+
+/* ── SUMMARY ── */
+.summary {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; margin-top: 12px;
+}
+.sum-card {
+  background: #0d0f14; border: 1.5px solid var(--border2);
+  border-radius: 12px; padding: 14px 8px; text-align: center;
+}
+.sum-val { font-size: 1.6rem; font-weight: 800; }
+.sum-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 3px; letter-spacing: .4px; }
+.sum-card.ok  .sum-val { color: var(--green); }
+.sum-card.err .sum-val { color: var(--red); }
+.sum-card.all .sum-val { color: #60a5fa; }
+
+/* ── LOG ── */
+.log {
+  background: #07090d; border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 12px;
+  font-size: 0.72rem; line-height: 1.9;
+  max-height: 200px; overflow-y: auto;
+  margin-top: 10px; display: none; font-family: 'Courier New', monospace;
+}
+.log.on { display: block; }
+.lg { display: flex; gap: 8px; }
+.lt { color: #3a3f52; flex-shrink: 0; }
+.lk { color: var(--green); }
+.le { color: var(--red); }
+.li { color: #60a5fa; }
+.lw { color: var(--yellow); }
+
+/* ── DEPLOY BTN ── */
+.deploy-btn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, #3b6ef5, #2251d4);
+  border: none; border-radius: 14px;
+  color: #fff; font-family: 'Inter', sans-serif;
+  font-size: 1rem; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .2s;
+  margin-top: 4px; -webkit-appearance: none;
+  box-shadow: 0 6px 20px rgba(59,110,245,.35);
+  letter-spacing: -.2px;
+}
+.deploy-btn:active { transform: scale(.98); box-shadow: 0 2px 8px rgba(59,110,245,.2); }
+.deploy-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+.deploy-btn.loading { background: linear-gradient(135deg, #1e2d5c, #1a254a); color: #60a5fa; box-shadow: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(96,165,250,.3);
+  border-top-color: #60a5fa;
+  border-radius: 50%; animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── HISTORY ── */
+.history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.hitem {
+  background: #0d0f14; border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 13px 14px;
+  display: flex; align-items: center; gap: 12px;
+  transition: border-color .2s;
+}
+.hitem:hover { border-color: var(--border2); }
+.hitem-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.hitem-dot.ok  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.hitem-dot.err { background: var(--red); }
+.hitem-info { flex: 1; min-width: 0; }
+.hitem-commit { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hitem-meta { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+.hitem-badge {
+  font-size: 0.65rem; font-weight: 700;
+  padding: 3px 8px; border-radius: 100px;
+  background: var(--surface2); color: var(--muted2);
+  flex-shrink: 0;
+}
+.hitem-badge.ok  { background: rgba(16,185,129,.12); color: var(--green); }
+.hitem-badge.err { background: rgba(239,68,68,.12);  color: #f87171; }
+
+.empty-history {
+  text-align: center; padding: 24px;
+  font-size: 0.78rem; color: var(--muted);
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--surface2); border: 1.5px solid var(--border2);
+  border-radius: 100px; padding: 11px 24px;
+  font-size: 0.85rem; font-weight: 700;
+  white-space: nowrap;
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+  z-index: 999;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.ok  { border-color: #10b98144; color: var(--green); }
+.toast.bad { border-color: #ef444444; color: #f87171; }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+
+/* ── INSTALL BTN ── */
+.install-btn {
+  display: none;
+  align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #3b6ef5, #6d28d9);
+  border: none; border-radius: 100px;
+  color: #fff; font-family: 'Inter', sans-serif;
+  font-size: 0.7rem; font-weight: 700;
+  padding: 6px 12px; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(59,110,245,.4);
+  transition: all .2s; white-space: nowrap;
+  animation: glow 2s ease-in-out infinite;
+}
+.install-btn.on { display: flex; }
+.install-btn:active { transform: scale(.95); }
+@keyframes glow {
+  0%,100% { box-shadow: 0 3px 12px rgba(59,110,245,.4); }
+  50%      { box-shadow: 0 3px 20px rgba(109,40,217,.7); }
+}
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-icon">🚀</div>
+  <div class="topbar-text">
+    <h1>GitHub Deployer</h1>
+    <p>Atualizador de sistema HR</p>
+  </div>
+  <div class="topbar-conn" id="connBadge">
+    <div class="dot"></div>
+    <span id="connLabel">Desconectado</span>
+  </div>
+  <button class="install-btn" id="installBtn" onclick="installApp()">⬇️ Instalar app</button>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar" id="statusBar">
+  <div class="sb-item">
+    <div class="sb-val" id="sbRepo">—</div>
+    <div class="sb-lbl">Repositório</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-val" id="sbBranch">—</div>
+    <div class="sb-lbl">Branch</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-val" id="sbFiles">0</div>
+    <div class="sb-lbl">Arquivos</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-val" id="sbDeploys">0</div>
+    <div class="sb-lbl">Deploys</div>
+  </div>
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="quick-section" id="quickSection">
+  <div class="main" style="padding-top:14px; padding-bottom:0;">
+    <div class="section-label">⚡ Ações rápidas</div>
+    <div class="quick-btns" id="quickBtns">
+      <button class="qbtn primary" onclick="quickDeploy('hr-app')">🏢 Atualizar HR App</button>
+      <button class="qbtn" onclick="quickDeploy('css')">🎨 Atualizar CSS</button>
+      <button class="qbtn" onclick="quickDeploy('module')">🧩 Módulo específico</button>
+      <button class="qbtn" onclick="addQuickBtn()">＋ Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- PASSO 1 -->
+<div class="step open" id="s1">
+  <div class="step-header" onclick="toggle('s1')">
+    <div class="step-num" id="n1">1</div>
+    <div style="flex:1">
+      <div class="step-title">Configuração</div>
+      <div class="step-status" id="st1">Token, usuário e repositório</div>
+    </div>
+    <div class="step-arrow">▼</div>
+  </div>
+  <div class="step-body">
+    <label>Token do GitHub</label>
+    <div class="pwd-wrap">
+      <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" oninput="onTokenInput()">
+      <button class="eye-btn" onclick="togglePwd()">👁</button>
+    </div>
+
+    <div class="repo-loader" id="repoLoader">
+      <div class="spin" style="width:13px;height:13px;border-width:1.5px;"></div>
+      <span>Buscando repositórios…</span>
+    </div>
+
+    <label>Usuário / Organização</label>
+    <input type="text" id="owner" placeholder="ex: meu-usuario" autocomplete="off" spellcheck="false" oninput="onOwnerInput()">
+
+    <label>Repositório</label>
+    <select id="repo" onchange="onRepoChange()">
+      <option value="">Selecione ou digite um repositório</option>
+    </select>
+    <input type="text" id="repoManual" placeholder="ou digite o nome do repositório" autocomplete="off" spellcheck="false" style="margin-top:6px; display:none;">
+
+    <label>Branch</label>
+    <select id="branch">
+      <option value="main">main</option>
+      <option value="master">master</option>
+      <option value="develop">develop</option>
+      <option value="gh-pages">gh-pages</option>
+    </select>
+
+    <!-- Teste de conexão -->
+    <div class="conn-test-wrap">
+      <button class="btn-test" id="testBtn" onclick="testConnection()">🔌 Testar conexão</button>
+    </div>
+    <div class="conn-result" id="connResult"></div>
+
+    <button class="btn-save" id="saveBtn" onclick="saveConfig()">Salvar configuração</button>
+  </div>
+</div>
+
+<!-- PASSO 2 -->
+<div class="step" id="s2">
+  <div class="step-header" onclick="toggle('s2')">
+    <div class="step-num" id="n2">2</div>
+    <div style="flex:1">
+      <div class="step-title">Mensagem do commit</div>
+      <div class="step-status" id="st2">O que foi alterado?</div>
+    </div>
+    <div class="step-arrow">▼</div>
+  </div>
+  <div class="step-body">
+    <label>Descreva a atualização</label>
+    <textarea id="commitMsg" placeholder="Ex: Atualiza estilos e corrige bug no menu"></textarea>
+  </div>
+</div>
+
+
+<!-- PASSO 4 -->
+<div class="step" id="s4">
+  <div class="step-header" onclick="toggle('s4')">
+    <div class="step-num" id="n4">4</div>
+    <div style="flex:1">
+      <div class="step-title">Enviar para o GitHub</div>
+      <div class="step-status" id="st4">Pronto para enviar</div>
+    </div>
+    <div class="step-arrow">▼</div>
+  </div>
+  <div class="step-body">
+    <div class="summary" id="summary" style="display:none">
+      <div class="sum-card all"><div class="sum-val" id="sTotal">0</div><div class="sum-lbl">Total</div></div>
+      <div class="sum-card ok" ><div class="sum-val" id="sOk">0</div><div class="sum-lbl">Enviados</div></div>
+      <div class="sum-card err"><div class="sum-val" id="sErr">0</div><div class="sum-lbl">Erros</div></div>
+    </div>
+    <div class="log" id="log"></div>
+    <br>
+    <button class="deploy-btn" id="deployBtn" onclick="deploy()">
+      🚀 &nbsp;Enviar agora
+    </button>
+  </div>
+</div>
+
+<!-- PASSO 5 — HISTÓRICO -->
+<div class="step" id="s5">
+  <div class="step-header" onclick="toggle('s5')">
+    <div class="step-num" id="n5">📋</div>
+    <div style="flex:1">
+      <div class="step-title">Últimos deploys</div>
+      <div class="step-status" id="st5">Histórico de envios</div>
+    </div>
+    <div class="step-arrow">▼</div>
+  </div>
+  <div class="step-body">
+    <div class="history-list" id="histList">
+      <div class="empty-history">Nenhum deploy realizado ainda</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+const $ = id => document.getElementById(id);
+const files = [];
+let running = false;
+let repoFetchTimer = null;
+let fetchedRepos = [];
+
+// ── INIT ─────────────────────────────────────────────
+(function init() {
+  try {
+    const c = JSON.parse(localStorage.getItem('ghd') || '{}');
+    if (c.t) { $('token').value = c.t; }
+    if (c.o) { $('owner').value = c.o; }
+    if (c.b) { setSelectOrAdd('branch', c.b); }
+    if (c.r) {
+      // will be set after repo list loads
+      setTimeout(() => setRepoValue(c.r), 100);
+    }
+    if (c.t && c.o && c.r) {
+      markDone(1);
+      $('st1').textContent = c.o + ' / ' + c.r;
+      updateStatusBar();
+      setConnBadge('ok', 'Configurado');
+      $('quickSection').classList.add('on');
+    }
+  } catch(_){}
+  renderHistory();
+})();
+
+// ── TOGGLE ───────────────────────────────────────────
+function toggle(id) { $(id).classList.toggle('open'); }
+
+function markDone(n) {
+  const el = $('n'+n);
+  if (!el || isNaN(n)) return;
+  el.classList.add('done');
+  el.textContent = '✓';
+}
+
+// ── CONN BADGE ───────────────────────────────────────
+function setConnBadge(state, label) {
+  const badge = $('connBadge');
+  badge.className = 'topbar-conn ' + (state || '');
+  $('connLabel').textContent = label;
+}
+
+// ── STATUS BAR ───────────────────────────────────────
+function updateStatusBar() {
+  try {
+    const c = JSON.parse(localStorage.getItem('ghd') || '{}');
+    const r = c.r || '—';
+    const b = c.b || 'main';
+    $('sbRepo').textContent = r.length > 12 ? r.slice(0,12)+'…' : r;
+    $('sbBranch').textContent = b;
+    $('sbDeploys').textContent = getHistory().length;
+    $('statusBar').classList.add('on');
+  } catch(_){}
+}
+
+function updateFileCount() {
+  $('sbFiles').textContent = files.length;
+}
+
+// ── TOKEN INPUT ──────────────────────────────────────
+function onTokenInput() {
+  const t = $('token').value.trim();
+  clearTimeout(repoFetchTimer);
+  if (t.length < 10) return;
+  repoFetchTimer = setTimeout(() => fetchRepos(t), 900);
+}
+
+function onOwnerInput() {
+  const t = $('token').value.trim();
+  const o = $('owner').value.trim();
+  if (t && o.length >= 2) {
+    clearTimeout(repoFetchTimer);
+    repoFetchTimer = setTimeout(() => fetchRepos(t, o), 700);
+  }
+}
+
+async function fetchRepos(token, owner) {
+  const loader = $('repoLoader');
+  loader.classList.add('on');
+
+  try {
+    let url = 'https://api.github.com/user/repos?per_page=100&sort=updated';
+    const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' };
+
+    const r = await fetch(url, { headers });
+    if (!r.ok) { loader.classList.remove('on'); return; }
+
+    const repos = await r.json();
+    fetchedRepos = repos.map(r => r.full_name);
+
+    const sel = $('repo');
+    // preserve current value
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Selecione um repositório</option>';
+    sel.innerHTML += '<option value="__manual__">✏️ Digitar manualmente</option>';
+
+    const userOwner = owner || $('owner').value.trim();
+    repos.forEach(rp => {
+      const opt = document.createElement('option');
+      opt.value = rp.name;
+      opt.textContent = rp.full_name + (rp.private ? ' 🔒' : '');
+      if (!$('owner').value.trim() && rp.owner) $('owner').value = rp.owner.login;
+      sel.appendChild(opt);
+    });
+
+    if (cur) setRepoValue(cur);
+  } catch(_) {}
+  loader.classList.remove('on');
+}
+
+function setRepoValue(val) {
+  const sel = $('repo');
+  for (let o of sel.options) {
+    if (o.value === val) { sel.value = val; onRepoChange(); return; }
+  }
+  // not found — show manual
+  sel.value = '__manual__';
+  $('repoManual').style.display = 'block';
+  $('repoManual').value = val;
+}
+
+function onRepoChange() {
+  if ($('repo').value === '__manual__') {
+    $('repoManual').style.display = 'block';
+    $('repoManual').focus();
+  } else {
+    $('repoManual').style.display = 'none';
+  }
+}
+
+function getRepoValue() {
+  const v = $('repo').value;
+  if (v === '__manual__') return $('repoManual').value.trim();
+  return v;
+}
+
+function setSelectOrAdd(id, val) {
+  const sel = $(id);
+  for (let o of sel.options) { if (o.value === val) { sel.value = val; return; } }
+  const opt = document.createElement('option');
+  opt.value = val; opt.textContent = val;
+  sel.appendChild(opt); sel.value = val;
+}
+
+// ── CONNECTION TEST ───────────────────────────────────
+async function testConnection() {
+  const token  = $('token').value.trim();
+  const owner  = $('owner').value.trim();
+  const repo   = getRepoValue();
+  const branch = $('branch').value.trim() || 'main';
+
+  const res = $('connResult');
+  const btn = $('testBtn');
+
+  if (!token) { showConnResult('err', '❌ Informe o token do GitHub'); return; }
+
+  btn.classList.add('testing');
+  btn.textContent = '🔄 Verificando…';
+  setConnBadge('checking', 'Verificando…');
+  res.className = 'conn-result';
+
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' };
+
+  // 1. Token
+  try {
+    const r1 = await fetch('https://api.github.com/user', { headers });
+    if (!r1.ok) {
+      showConnResult('err', '❌ Token inválido ou sem permissão\nVerifique se o PAT tem escopo "repo"');
+      setConnBadge('err', 'Erro de auth');
+      btn.classList.remove('testing'); btn.textContent = '🔌 Testar conexão'; return;
+    }
+    const user = await r1.json();
+    if (!owner) $('owner').value = user.login;
+
+    if (!repo) {
+      showConnResult('ok', `✅ Token válido · usuário: ${user.login}\nInforme o repositório para verificar a branch`);
+      setConnBadge('ok', 'Token OK');
+      btn.classList.remove('testing'); btn.textContent = '🔌 Testar conexão'; return;
+    }
+
+    // 2. Repo
+    const ownerVal = $('owner').value.trim();
+    const r2 = await fetch(`https://api.github.com/repos/${ownerVal}/${repo}`, { headers });
+    if (!r2.ok) {
+      showConnResult('err', `❌ Repositório não encontrado\n${ownerVal}/${repo}`);
+      setConnBadge('err', 'Repo inválido');
+      btn.classList.remove('testing'); btn.textContent = '🔌 Testar conexão'; return;
+    }
+
+    // 3. Branch
+    const r3 = await fetch(`https://api.github.com/repos/${ownerVal}/${repo}/branches/${branch}`, { headers });
+    if (!r3.ok) {
+      showConnResult('warn', `⚠️ Repositório OK · Branch "${branch}" não encontrada\nVerifique o nome da branch`);
+      setConnBadge('ok', 'Branch inválida');
+    } else {
+      showConnResult('ok', `✅ Conectado com sucesso!\n${ownerVal}/${repo} @ ${branch}`);
+      setConnBadge('ok', 'Conectado');
+      markDone(2);
+    }
+  } catch(e) {
+    showConnResult('err', '❌ Erro de rede. Verifique sua conexão');
+    setConnBadge('err', 'Sem conexão');
+  }
+
+  btn.classList.remove('testing');
+  btn.textContent = '🔌 Testar conexão';
+}
+
+function showConnResult(type, msg) {
+  const el = $('connResult');
+  el.className = 'conn-result on ' + type;
+  el.innerHTML = msg.replace(/\n/g, '<br>');
+}
+
+// ── SAVE CONFIG ───────────────────────────────────────
+function saveConfig() {
+  const t = $('token').value.trim();
+  const o = $('owner').value.trim();
+  const r = getRepoValue();
+  if (!t || !o || !r) { toast('Preencha token, usuário e repositório', 'bad'); return; }
+
+  localStorage.setItem('ghd', JSON.stringify({
+    t, o, r, b: $('branch').value.trim() || 'main'
+  }));
+
+  markDone(1);
+  $('st1').textContent = o + ' / ' + r;
+  updateStatusBar();
+  $('quickSection').classList.add('on');
+
+  const btn = $('saveBtn');
+  btn.textContent = '✅ Configuração salva!';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = 'Salvar configuração'; btn.classList.remove('saved'); }, 2500);
+}
+
+function togglePwd() {
+  const el = $('token');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+// ── QUICK DEPLOY ─────────────────────────────────────
+function quickDeploy(type) {
+  const labels = {
+    'hr-app': 'Atualizar HR App',
+    'css': 'Atualizar CSS',
+    'module': 'Atualizar Módulo'
+  };
+  $('commitMsg').value = labels[type] || type;
+  toggle('s2');
+  $('s4').classList.add('open');
+  toast('✏️ Commit pré-preenchido — selecione os arquivos e envie', '');
+}
+
+function addQuickBtn() {
+  const name = prompt('Nome do botão rápido:');
+  if (!name) return;
+  const btn = document.createElement('button');
+  btn.className = 'qbtn';
+  btn.textContent = '⚡ ' + name;
+  btn.onclick = () => { $('commitMsg').value = name; toast('✏️ Commit pré-preenchido', ''); };
+  $('quickBtns').insertBefore(btn, $('quickBtns').lastElementChild);
+  toast('✅ Atalho adicionado', 'ok');
+}
+
+// ── FILE ICONS ───────────────────────────────────────
+const iconMap = {js:'📜',css:'🎨',html:'🌐',json:'📋',md:'📝',txt:'📄',
+                 png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',svg:'🖼',
+                 py:'🐍',ts:'📘',vue:'💚',jsx:'⚛️',tsx:'⚛️'};
+function getIcon(n) { return iconMap[n.split('.').pop().toLowerCase()] || '📄'; }
+function fmtSize(b) { return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(2)+'MB'; }
+
+// dropzone removed
+
+function addFiles(list) {
+  Array.from(list).forEach(f => {
+    if (files.find(x => x.file.name === f.name)) return;
+    const entry = { file: f, path: f.name, status: 'pending', el: null };
+    files.push(entry);
+    const div = document.createElement('div');
+    div.className = 'fitem';
+    div.innerHTML = `
+      <div class="fitem-icon">${getIcon(f.name)}</div>
+      <div>
+        <div class="fitem-name">${f.name}</div>
+        <div class="fitem-size">${fmtSize(f.size)}</div>
+        <input class="fitem-path" type="text" value="${f.name}" placeholder="caminho no repositório" spellcheck="false">
+        <div class="fitem-bar"><div class="fitem-fill"></div></div>
+      </div>
+      <button class="fitem-remove">✕</button>
+    `;
+    div.querySelector('.fitem-path').addEventListener('change', ev => entry.path = ev.target.value.trim() || f.name);
+    div.querySelector('.fitem-remove').addEventListener('click', () => {
+      files.splice(files.indexOf(entry), 1);
+      div.remove(); updCount();
+    });
+    entry.el = div;
+    $('fl').appendChild(div);
+  });
+  $('fi').value = '';
+  updCount();
+}
+
+function updCount() {
+  const n = files.length;
+  $('st3').textContent = n === 0 ? 'Nenhum arquivo selecionado' : n + ' arquivo(s) selecionado(s)';
+  if (n > 0) markDone(3);
+  updateFileCount();
+}
+
+function setItemState(entry, state) {
+  entry.el.className = 'fitem' + (state !== 'pending' ? ' '+state : '');
+}
+
+// ── LOG ──────────────────────────────────────────────
+function addLog(msg, type='i') {
+  const box = $('log'); box.classList.add('on');
+  const t = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const d = document.createElement('div');
+  d.className = 'lg';
+  d.innerHTML = `<span class="lt">${t}</span><span class="l${type}">${msg}</span>`;
+  box.appendChild(d); box.scrollTop = box.scrollHeight;
+}
+
+// ── TOAST ────────────────────────────────────────────
+let tt;
+function toast(msg, cls='') {
+  const el = $('toast');
+  el.textContent = msg; el.className = 'toast show ' + cls;
+  clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── HISTORY ──────────────────────────────────────────
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('ghdHist') || '[]'); } catch(_) { return []; }
+}
+
+function saveHistory(h) {
+  localStorage.setItem('ghdHist', JSON.stringify(h.slice(0, 20)));
+}
+
+function addHistoryEntry(entry) {
+  const h = getHistory();
+  h.unshift(entry);
+  saveHistory(h);
+  renderHistory();
+  $('sbDeploys').textContent = h.length;
+}
+
+function renderHistory() {
+  const h = getHistory();
+  const list = $('histList');
+  if (!h.length) {
+    list.innerHTML = '<div class="empty-history">Nenhum deploy realizado ainda</div>';
+    $('st5').textContent = 'Histórico de envios';
+    return;
+  }
+  $('st5').textContent = `${h.length} deploy(s) registrado(s)`;
+  list.innerHTML = h.map(e => {
+    const cls = e.err ? 'err' : 'ok';
+    const badge = e.err ? `${e.ok}ok · ${e.err}err` : `${e.ok} arquivo(s)`;
+    return `
+      <div class="hitem">
+        <div class="hitem-dot ${cls}"></div>
+        <div class="hitem-info">
+          <div class="hitem-commit">${escHtml(e.msg)}</div>
+          <div class="hitem-meta">${e.repo} @ ${e.branch} · ${e.date}</div>
+        </div>
+        <div class="hitem-badge ${cls}">${badge}</div>
+      </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── GITHUB API ───────────────────────────────────────
+async function getSHA(owner, repo, branch, path, token) {
+  try {
+    const r = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }}
+    );
+    if (r.status === 404) return null;
+    return (await r.json()).sha || null;
+  } catch(_) { return null; }
+}
+
+async function pushFile(owner, repo, branch, path, content, sha, msg, token) {
+  const body = { message: msg, content, branch };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  return { ok: r.ok, status: r.status, data: await r.json() };
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Falha ao ler arquivo'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ── DEPLOY ───────────────────────────────────────────
+async function deploy() {
+  if (running) return;
+  const token  = $('token').value.trim();
+  const owner  = $('owner').value.trim();
+  const repo   = getRepoValue();
+  const branch = $('branch').value.trim() || 'main';
+  const msg    = $('commitMsg').value.trim() || `Update via GitHub Deployer — ${new Date().toLocaleString('pt-BR')}`;
+
+  if (!token || !owner || !repo) { toast('Preencha a configuração no Passo 1', 'bad'); return; }
+  if (!files.length) { toast('Selecione arquivos no Passo 3', 'bad'); return; }
+
+  if (!$('s4').classList.contains('open')) $('s4').classList.add('open');
+
+  running = true;
+  setConnBadge('checking', 'Enviando…');
+  const btn = $('deployBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<div class="spin"></div>&nbsp; Enviando…';
+  btn.disabled = true;
+
+  files.forEach(f => { f.status = 'pending'; setItemState(f, 'pending'); });
+  $('log').innerHTML = ''; $('log').classList.add('on');
+  $('summary').style.display = 'grid';
+
+  addLog(`Iniciando → ${owner}/${repo} @ ${branch}`, 'i');
+  addLog(`${files.length} arquivo(s) para enviar`, 'i');
+
+  let ok = 0, fail = 0;
+
+  for (const entry of files) {
+    const path = entry.path.replace(/^\/+/, '');
+    addLog(`Enviando: ${path}`, 'i');
+    setItemState(entry, 'uploading');
+
+    try {
+      const content = await toBase64(entry.file);
+      const sha = await getSHA(owner, repo, branch, path, token);
+      addLog(sha ? `  Atualizando arquivo existente` : `  Criando novo arquivo`, 'w');
+
+      const res = await pushFile(owner, repo, branch, path, content, sha, msg, token);
+      if (res.ok) {
+        entry.status = 'done'; setItemState(entry, 'done');
+        addLog(`  ✅ Enviado com sucesso`, 'k'); ok++;
+      } else {
+        throw new Error(res.data.message || `Erro HTTP ${res.status}`);
+      }
+    } catch(err) {
+      entry.status = 'error'; setItemState(entry, 'error');
+      addLog(`  ❌ ${err.message}`, 'e'); fail++;
+    }
+
+    $('sTotal').textContent = ok + fail;
+    $('sOk').textContent = ok;
+    $('sErr').textContent = fail;
+    $('st4').textContent = `${ok} enviados · ${fail} erros`;
+    await new Promise(r => setTimeout(r, 350));
+  }
+
+  addLog('─────────────────────────', 'i');
+  addLog(`Concluído: ${ok} ok · ${fail} erro(s)`, ok > 0 ? 'k' : 'e');
+  if (ok > 0) { addLog(`GitHub Pages atualiza em ~1 minuto`, 'i'); markDone(4); }
+
+  // salvar histórico
+  addHistoryEntry({
+    msg, repo, branch,
+    date: new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    ok, err: fail
+  });
+
+  running = false;
+  setConnBadge('ok', 'Conectado');
+  btn.classList.remove('loading');
+  btn.innerHTML = '🚀 &nbsp;Enviar agora';
+  btn.disabled = false;
+
+  if (!fail)    toast(`✅ ${ok} arquivo(s) enviados!`, 'ok');
+  else if (!ok) toast(`❌ Falha. Verifique o token`, 'bad');
+  else          toast(`⚠️ ${ok} ok · ${fail} com erro`, '');
+}
+
+// ── PWA INSTALL ──────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.add('on');
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.remove('on');
+  toast('✅ App instalado com sucesso!', 'ok');
+});
+
+async function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      deferredPrompt = null;
+      const btn = document.getElementById('installBtn');
+      if (btn) btn.classList.remove('on');
+    }
+  } else {
+    toast('Abra o menu do Chrome ⋮ → Adicionar à tela inicial', '');
+  }
+}
+
+
+});
+</script>
+</body>
+</html>
