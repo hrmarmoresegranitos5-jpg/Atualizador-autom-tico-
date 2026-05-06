@@ -447,6 +447,10 @@ select option { background: #161820; }
   animation: glow 2s ease-in-out infinite;
 }
 .install-btn:active { transform: scale(.95); }
+/* Esconde botão quando já está rodando como PWA instalada */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  .install-btn { display: none !important; }
+}
 @keyframes glow {
   0%,100% { box-shadow: 0 3px 12px rgba(59,110,245,.4); }
   50%      { box-shadow: 0 3px 20px rgba(109,40,217,.7); }
@@ -719,16 +723,52 @@ select option { background: #161820; }
 <script>
 // ── PWA INSTALL ──────────────────────────────────────
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
-window.addEventListener('appinstalled', () => { deferredPrompt = null; });
+
+function updateInstallBtn() {
+  const btn = document.getElementById('installBtn');
+  if (!btn) return;
+  // Esconde se já está rodando como app instalada
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone || !deferredPrompt) {
+    btn.style.display = 'none';
+  } else {
+    btn.style.display = 'flex';
+  }
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  updateInstallBtn();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  updateInstallBtn();
+});
+
+// Esconde imediatamente se já for standalone
+document.addEventListener('DOMContentLoaded', updateInstallBtn);
+
 function installApp() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      updateInstallBtn();
+    });
   } else {
     document.getElementById('instOverlay').classList.add('on');
   }
 }
+
+// ── ROTAÇÃO ──────────────────────────────────────────
+// Libera rotação via Screen Orientation API (funciona em PWA)
+if (screen.orientation && screen.orientation.unlock) {
+  try { screen.orientation.unlock(); } catch(_) {}
+}
+
 function closeInstall(e) {
   if (!e || e.target === document.getElementById('instOverlay'))
     document.getElementById('instOverlay').classList.remove('on');
