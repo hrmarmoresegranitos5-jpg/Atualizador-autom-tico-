@@ -599,6 +599,27 @@ select option { background: #161820; }
 </div>
 
 
+<!-- PASSO 3 -->
+<div class="step" id="s3">
+  <div class="step-header" onclick="toggle('s3')">
+    <div class="step-num" id="n3">3</div>
+    <div style="flex:1">
+      <div class="step-title">Selecionar arquivos</div>
+      <div class="step-status" id="st3">Nenhum arquivo selecionado</div>
+    </div>
+    <div class="step-arrow">▼</div>
+  </div>
+  <div class="step-body">
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fi" multiple onchange="addFiles(this.files)">
+      <div class="dz-icon">📂</div>
+      <div class="dz-title">Toque para selecionar arquivos</div>
+      <div class="dz-sub">ou arraste e solte aqui</div>
+    </div>
+    <div class="file-list" id="fl"></div>
+  </div>
+</div>
+
 <!-- PASSO 4 -->
 <div class="step" id="s4">
   <div class="step-header" onclick="toggle('s4')">
@@ -689,6 +710,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   } catch(_){}
   renderHistory();
+
+  // ── DROPZONE drag & drop ──
+  const dz = $('dropzone');
+  if (dz) {
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag');
+      addFiles(e.dataTransfer.files);
+    });
+  }
 })();
 }); // DOMContentLoaded
 
